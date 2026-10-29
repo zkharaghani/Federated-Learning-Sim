@@ -1,0 +1,47 @@
+# Runs server + 2 clients on ONE machine to test the images.
+#   ./make_certs.sh localhost
+#   docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from superlink
+# (--abort-on-container-exit stops the clients when the server finishes its run)
+# Put test datasets in ./data/client1 and ./data/client2 and set DATA_PATH,
+# or leave DATA_PATH empty for synthetic data.
+services:
+  superlink:
+    build: { context: .., dockerfile: docker/server/Dockerfile }
+    image: fl-server:1.0
+    environment:
+      # override from the command line, e.g.
+      #   NUM_ROUNDS=50 RUN_CONFIG="lr=0.3 batch-size=64" docker compose -f docker-compose.test.yml up ...
+      NUM_ROUNDS: ${NUM_ROUNDS:-30}
+      NUM_CLIENTS: "2"
+      RUN_CONFIG: ${RUN_CONFIG:-}
+    volumes:
+      # create_host_path: false -> fail clearly if make_certs.sh wasn't run,
+      # instead of Docker silently creating root-owned empty folders
+      - { type: bind, source: ./certs, target: /certs, read_only: true, bind: { create_host_path: false } }
+      - ./results:/results
+    ports: ["9092:9092"]
+
+  client1:
+    build: { context: .., dockerfile: docker/client/Dockerfile }
+    image: fl-client:1.0
+    depends_on: [superlink]
+    environment:
+      SUPERLINK_ADDRESS: superlink:9092
+      CLIENT_ID: client1
+      PARTITION_ID: "0"
+      DATA_PATH: ${CLIENT1_DATA:-}
+    volumes:
+      - { type: bind, source: ./certs/ca.crt, target: /certs/ca.crt, read_only: true, bind: { create_host_path: false } }
+      - ./data/client1:/data:ro
+
+  client2:
+    image: fl-client:1.0
+    depends_on: [superlink, client1]
+    environment:
+      SUPERLINK_ADDRESS: superlink:9092
+      CLIENT_ID: client2
+      PARTITION_ID: "1"
+      DATA_PATH: ${CLIENT2_DATA:-}
+    volumes:
+      - { type: bind, source: ./certs/ca.crt, target: /certs/ca.crt, read_only: true, bind: { create_host_path: false } }
+      - ./data/client2:/data:ro

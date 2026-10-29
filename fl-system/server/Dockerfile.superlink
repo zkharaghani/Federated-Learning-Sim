@@ -1,0 +1,10 @@
+# Flower SuperLink (the FL server). The ServerApp runs in a subprocess here,
+# so the app's dependencies (numpy) are installed too.
+ARG FLWR_VERSION=1.40.0
+FROM python:3.12-slim
+ARG FLWR_VERSION
+RUN pip install --no-cache-dir "flwr==${FLWR_VERSION}" "numpy>=1.26" \
+ && useradd --create-home --uid 1000 app && mkdir /data && chown app /data
+USER app
+WORKDIR /home/app
+ENTRYPOINT ["flower-superlink"]

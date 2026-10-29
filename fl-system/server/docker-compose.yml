@@ -1,0 +1,37 @@
+# Server stack: Flower SuperLink (TLS) + bootstrap/provisioning service.
+services:
+  superlink:
+    build:
+      context: .
+      dockerfile: Dockerfile.superlink
+      args:
+        FLWR_VERSION: ${FLWR_VERSION}
+    image: fl-superlink:${FLWR_VERSION}
+    container_name: fl-superlink
+    restart: unless-stopped
+    ports:
+      - "${SUPERLINK_PORT}:${SUPERLINK_PORT}"
+    volumes:
+      - ./certs:/certs:ro
+      - superlink-data:/data
+    command:
+      - --host=0.0.0.0
+      - --port=${SUPERLINK_PORT}
+      - --ssl-ca-certfile=/certs/ca.crt
+      - --ssl-certfile=/certs/server.pem
+      - --ssl-keyfile=/certs/server.key
+      - --database=/data/state.db
+
+  bootstrap:
+    image: python:3.12-slim
+    container_name: fl-bootstrap
+    restart: unless-stopped
+    working_dir: /srv
+    ports:
+      - "${BOOTSTRAP_PORT}:${BOOTSTRAP_PORT}"
+    volumes:
+      - ./:/srv
+    command: ["python", "-u", "bootstrap_server.py"]
+
+volumes:
+  superlink-data:

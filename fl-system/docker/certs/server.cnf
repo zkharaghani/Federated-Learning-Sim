@@ -1,0 +1,18 @@
+[req]
+distinguished_name = dn
+prompt = no
+[dn]
+O  = FL-Lab
+CN = 10.1.68.70
+[v3_sign]
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+[alt]
+IP.1 = 127.0.0.1
+DNS.1 = localhost
+DNS.2 = superlink
+IP.2 = 10.1.68.70

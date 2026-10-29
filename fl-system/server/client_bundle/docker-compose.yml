@@ -1,0 +1,19 @@
+# Started by join_federation.py on the client machine.
+# Values come from client.env (server settings + local data settings).
+services:
+  supernode:
+    build:
+      context: .
+      args:
+        FLWR_VERSION: ${FLWR_VERSION}
+    image: fl-supernode:${FLWR_VERSION}
+    container_name: fl-supernode-${CLIENT_ID}
+    restart: unless-stopped
+    volumes:
+      - ./certs/ca.crt:/certs/ca.crt:ro
+      # local dataset folder (read-only). Empty DATA_FILE -> synthetic data
+      - ${DATA_DIR:-./data}:/data:ro
+    command:
+      - --superlink=${SUPERLINK_ADDRESS}
+      - --root-certificates=/certs/ca.crt
+      - --node-config=client-id="${CLIENT_ID}" partition-id=${PARTITION_ID} num-partitions=${NUM_PARTITIONS} data-path="${DATA_PATH_IN_CONTAINER:-}"
