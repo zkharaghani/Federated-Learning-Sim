@@ -12,20 +12,6 @@ mounted read-only into the container and never leaves that machine. Features are
 normalised with a global mean/std the server builds from per-client sums (no raw rows
 are shared), and the learning rate is scaled automatically to the number of features.
 
-```
-            server machine (SERVER_IP)                         client machines
- ┌───────────────────────────────────────────┐
- │ bootstrap_server.py  :8443  (HTTPS)       │◄── 1. GET /ca.crt (fingerprint pinned)
- │   - sends Docker files + CA cert + .env   │◄── 2. GET /bundle/<id> (token)
- │   - receives "ready"                      │◄── 4. POST /ready
- │ Flower SuperLink     :9092  (TLS)         │◄── 3. SuperNode container connects
- │   ServerApp: wait 2 nodes → query ready → │
- │   N rounds: send params → avg params+loss │──► train msg / ◄── params + loss
- └───────────────────────────────────────────┘
-```
-
-**Running in a dataspace?** Use the two self-contained images in `docker/`
-(`fl-server` and `fl-client`); see `docker/README.md`.
 
 ## Layout
 ```
