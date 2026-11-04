@@ -1,0 +1,42 @@
+# TFGrid rootfs for the Flower SuperLink and ServerApp.
+FROM python:3.12-slim
+
+ARG FLWR_VERSION=1.40.0
+ARG ZINIT_VERSION=v0.2.28
+ARG ZINIT_SHA256=e31e1a2349346d0bf1e74783631c7cbbb9c77cc0d947efa36edd290ae0950565
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl iproute2 openssh-server openssl util-linux \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir "flwr==${FLWR_VERSION}" "numpy>=1.26,<3" \
+    && useradd --create-home --uid 1000 app
+
+RUN curl -fsSL -o /sbin/zinit \
+      "https://github.com/threefoldtech/zinit/releases/download/${ZINIT_VERSION}/zinit-linux-x86_64" \
+    && echo "${ZINIT_SHA256}  /sbin/zinit" | sha256sum -c - \
+    && chmod +x /sbin/zinit
+
+COPY --chown=app fl-app /app
+COPY docker/server/flist/zinit/ /etc/zinit/
+COPY docker/server/flist/scripts/ /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/fl-*.sh \
+    && mkdir -p /run/sshd /root/.ssh /disk1/certs /disk1/results \
+    && chmod 700 /root/.ssh
+
+ENV PYTHONUNBUFFERED=1 \
+    SUPERLINK_PORT=9092 \
+    NUM_ROUNDS=30 \
+    NUM_CLIENTS=2 \
+    WAIT_TIMEOUT=3600 \
+    RUN_CONFIG="" \
+    KEEP_RUNNING=false \
+    CA_BOOTSTRAP_PORT=8443 \
+    CERTS_DIR=/disk1/certs \
+    RESULTS_DIR=/disk1/results \
+    ENABLE_SSH=0
+
+EXPOSE 9092 8443 22
+
+# Documents the deploy entrypoint; TFGrid uses the workload entrypoint field.
+ENTRYPOINT ["/sbin/zinit", "init"]
