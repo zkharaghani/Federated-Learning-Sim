@@ -23,6 +23,55 @@ fl-app/   the Flower App (ServerApp + ClientApp + data loading/model)
 docker/   self-contained server and client images for a dataspace (see docker/README.md)
 ```
 
+## TFGrid / Phase4AI offers
+
+The TFGrid deployment variant provides two independent FList packages:
+
+- Flower server: SuperLink, ServerApp, automatic TLS certificate generation,
+  public CA bootstrap endpoint, and optional SSH;
+- Flower client: SuperNode, automatic authenticated CA download, local data
+  support, and optional SSH.
+
+Build both packages from the repository root:
+
+```bash
+docker/build_threefold_flists.sh v1
+```
+
+Or build them separately:
+
+```bash
+docker/build_server_flist.sh v1
+docker/build_client_flist.sh v1
+```
+
+Generated archives:
+
+```text
+docker/dist/fl-server-threefold-v1.tar.gz
+docker/dist/fl-client-threefold-v1.tar.gz
+```
+
+Ready-to-paste Software Repository user-input declarations are provided in:
+
+```text
+docker/offers/server-user-input.json
+docker/offers/client-user-input.json
+```
+
+The server form asks for the number of clients. The client form asks only for
+the deployed server's public IPv4 address and the CA bootstrap token exposed by
+the server pass. Client identity is derived automatically from its deployment
+ID.
+
+The build scripts require Docker with Buildx and produce `linux/amd64` root
+filesystems suitable for upload to the Phase4AI Software Repository. They also
+verify that the expected runtime, zinit, SSH, TLS bootstrap, and Flower files
+are present in each archive.
+
+See [docker/README.md](docker/README.md#tfgrid--phase4ai-deployment) for the
+complete offer configuration and two-client deployment procedure.
+
 ## Run it
 
 **Server** (Linux with Docker; also `pip install flwr==1.40.0` on the host for the `flwr` CLI)
